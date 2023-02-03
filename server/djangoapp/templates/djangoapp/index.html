@@ -12,16 +12,29 @@
     <script src="https://unpkg.com/bootstrap-table@1.18.2/dist/extensions/filter-control/bootstrap-table-filter-control.min.js"></script>
 
 </head>
-
     <body>
-     This is the index page of your Django app!
-    <!--Add a nav bar here -->
-        <nav>
-            <a href="about">About</a>
-            <a href="contact">Contact</a>
+        <nav class="navbar navbar-expand-lg">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="about">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="contact">Contact</a>
+                </li>
+            </ul>
+            {% if user.is_authenticated %}
+            <a class="nav-link" href="#">({{ user.username }})</a>
+            <a class="nav-link" href="{% url 'djangoapp:logout' %}">Logout</a>
+            {% else %}
+            <form class="form-inline my-2 my-lg-0" action="{% url 'djangoapp:login' %}" method="post">
+                {% csrf_token %}
+                <input class="form-control mr-sm-2" type="text" name="username" placeholder="Username"/>
+                <input class="form-control mr-sm-2" type="password" name="password" placeholder="Password">
+                <input class="btn btn-primary my-2 my-sm-0" type="submit" name="submit" value="Log In"/>
+            </form>
+            <a class="nav-link" href="{% url 'djangoapp:register' %}">Sign up</a>
+            {% endif %}
         </nav>
     <!--Add a dealer table here -->
-        
     </body>
-
 </html>
