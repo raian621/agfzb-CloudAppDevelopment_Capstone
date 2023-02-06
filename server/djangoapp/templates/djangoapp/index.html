@@ -35,6 +35,20 @@
             <a class="nav-link" href="{% url 'djangoapp:register' %}">Sign up</a>
             {% endif %}
         </nav>
-    <!--Add a dealer table here -->
+        <!--Add a dealer table here -->
+        <table class="table table-striped">
+            <tr>
+                <th>Name</th>
+                <th>Location</th>
+                <th>Address</th>
+            </tr>
+            {% for dealer in dealers %}
+            <tr>
+                <td>{{ dealer.short_name }}</td>
+                <td>{{ dealer.city}}, {{ dealer.st }}</td>
+                <td>{{ dealer.address }}</td>
+            </tr>
+            {% endfor %}
+        </table>    
     </body>
 </html>
