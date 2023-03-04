@@ -33,8 +33,8 @@ class CarModel(models.Model):
   dealer_id = models.IntegerField()
   name = models.CharField(max_length=50)
   type = models.CharField(max_length=20, choices=[
-    (SEDAN, "Sedan"), 
-    (SUV, "SUV"), 
+    (SEDAN, "Sedan"),
+    (SUV, "SUV"),
     (WAGON, "WAGON")
   ])
   year = models.IntegerField()

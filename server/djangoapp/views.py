@@ -2,22 +2,19 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
-# from .models import related models
-from .restapis import get_dealers_from_cf, get_dealer_reviews_from_cf
+from .models import CarMake, CarModel
+from .restapis import *
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from datetime import datetime
 import logging
 import json
 
-CF_URL_BASE = "https://us-south.functions.appdomain.cloud/api/v1/web/2df01edb-4ddf-4eb7-bb00-54036390fa19"
+CF_URL_BASE = "https://us-south.functions.appdomain.cloud/api/v1/web/2df01edb-4ddf-4eb7-bb00-54036390fa19/dealership-package"
+dealerships = None
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
-
-
-# Create your views here.
-
 
 # Create an `about` view to render a static about page
 def about(request):
@@ -89,18 +86,22 @@ def registration_request(request):
 
 # Update the `get_dealerships` view to render the index page with a list of dealerships
 def get_dealerships(request):
+    global dealerships
     context = {}
     if request.method == "GET":
-        url = f"{CF_URL_BASE}/dealership-package/get-dealership"
-        dealerships = get_dealers_from_cf(url)
+        url = f"{CF_URL_BASE}/get-dealership"
+        if (dealerships == None):
+            dealerships = get_dealers_from_cf(url)
         context["dealers"] = dealerships
         return render(request, "djangoapp/index.html", context)
 
 # Create a `get_dealer_details` view to render the reviews of a dealer
 def get_dealer_details(request, dealer_id):
-    context = {}
+    dealer = get_dealers_from_cf(f"{CF_URL_BASE}/get-dealership", dealerId=dealer_id)[0]
+    context = {"dealer": dealer}
+
     if request.method == "GET":
-        url = f"{CF_URL_BASE}/dealership-package/get-review"
+        url = f"{CF_URL_BASE}/get-review"
         print(f"-- GET DEALER DETAILS: {url}")
         context["reviews"] = get_dealer_reviews_from_cf(url, dealer_id)
 
@@ -109,24 +110,47 @@ def get_dealer_details(request, dealer_id):
 
 # Create a `add_review` view to submit a review
 def add_review(request, dealer_id):
+    dealer = get_dealers_from_cf(f"{CF_URL_BASE}/get-dealership", dealerId=dealer_id)[0]
+    context = {"dealer": dealer}
     if request.method == "POST":
+        user = request.user
+        post_data=request.POST
         review = {
-            "dealership": request.POST["dealership"],
-            "name": request.POST["name"],
-            "purchase": request.POST["purchase"],
-            "review": request.POST["review"],
-            "time": request.POST["purchase-date"],
-            "car_make": request.POST["car-make"],
-            "car_model": request.POST["car-model"],
-            "car_year": request.POST["car-year"],
+            'dealership': dealer_id,
+            'name': f"{user.first_name} {user.last_name}",
+            'purchase_date': post_data['purchase_date'],
+            'review': post_data['review'],
+            'purchase': post_data.get('purchase', False) == 'on',
         }
 
+        if review['purchase']:
+            print(post_data['car'])
+            car = CarModel.objects.get(id=int(post_data['car']))
+            print("car:", car)
+            print("car:", car.car_make.name)
+            print("car:", car.name)
+            print("car:", car.year)
+            review['car_make'] =  car.car_make.name
+            review['car_model'] = car.name
+            review['car_year'] =  car.year
+
         print(review)
+
         json_payload = { "review": review }
+        url = f'{CF_URL_BASE}/post-review'
+        post_request(url, json_payload, dealer_id=dealer_id)
 
-        
-
-        return HttpResponse(content="ok")
+        return redirect(f'/djangoapp/dealer/{dealer_id}')
     else:
-        return render(request, "djangoapp/add_review.html")
+        cars = []
+        for model in CarModel.objects.filter(dealer_id=dealer.id):
+            cars.append({
+                'id': model.id,
+                'year': model.year,
+                'name': model.name,
+                'make': model.car_make.name
+            })
+        context['cars'] = cars
+        print(cars)
+        return render(request, "djangoapp/add_review.html", context)
 

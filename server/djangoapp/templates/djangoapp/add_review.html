@@ -8,32 +8,52 @@
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.5.0/js/bootstrap-datepicker.js"></script>
+    <script>
+        function purchaseToggle() {
+            var checkbox = document.getElementsByName('purchase')[0];
+            var carSelector = document.getElementsByName('car')[0];
+            var purchaseDate = document.getElementsByName('purchase_date')[0];
 
+            if (checkbox.checked && carSelector.hasAttribute('disabled') && purchaseDate.hasAttribute('disabled')) {
+                carSelector.removeAttribute('disabled');
+                purchaseDate.removeAttribute('disabled');
+                purchaseDate.setAttribute('required', '');
+
+                carSelector.focus();
+            } else {
+                carSelector.setAttribute('disabled', '');
+                purchaseDate.setAttribute('disabled', '');
+                purchaseDate.removeAttribute('required');
+            }
+        }
+    </script>
 </head>
 <body style="width: 100vw">
     <div class="mx-auto mt-4" style="width: 50rem">
-        <h1>Add Review</h1>
-        <form class="form my-2 my-lg-0" method="post" action="{% url 'djangoapp:register' %}">
+        <h1>Add Review for <b>{{ dealer.full_name }}</b></h1>
+        <form class="form my-2 my-lg-0" method="post" action="{% url 'djangoapp:add_review' dealer.id %}">
             {% csrf_token %}
-            <div class="form-check my-2">
-                <input class="form-check-input" type="checkbox" name="purchase" placeholder="Purchase"/>
-                <label class="form-check-label" for="purchase">Purchase</label>
-            </div>
-            <div class="form-group">
-                <label for="car-make">Car make</label>
-                <input class="form-control" type="text" name="car-make" placeholder="Enter car make"/>
-            </div>
-            <div class="form-group">
-                <label for="car-model">Car model</label>
-                <input class="form-control" type="text" name="car-model" placeholder="Enter car model"/>
-            </div>
-            <div class="form-group">
-                <label for="car-year">Car year</label>
-                <input class="form-control" type="number" name="car-year"/>
-            </div>
             <div class="form-group">
                 <label for="review">Review</label>
-                <textarea class="form-control" type="text" name="review" placeholder="Enter review"></textarea>
+                <textarea class="form-control" type="text" name="review" placeholder="Enter review" required></textarea>
+            </div>
+            <div class="form-check my-2">
+                <input class="form-check-input" type="checkbox" name="purchase" placeholder="Purchase" onchange="purchaseToggle()"/>
+                <label class="form-check-label" for="purchase">Check this box if you purchased a car from this dealership</label>
+            </div>
+            <div class="form-group">
+                <label for="car">Select your car:</label>
+                <select class="form-control" name="car" disabled>
+                    {% for car in cars %}
+                    <option selected value="{{ car.id }}">{{car.name}}-{{car.make}}-{{car.year}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="purchase_date">Purchase Date (MM/DD/YYYY)</label>
+                <input class="form-control" type="text" name="purchase_date" disabled
+                    pattern="([0][1-9]|[1][0-2])\/([0-2][0-9]|[3][01])\/[0-9]{4}"
+                />
             </div>
             <input class="btn btn-primary" type="submit" value="Post review"/>
         </form>
