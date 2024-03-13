@@ -29,8 +29,8 @@ def main(param_dict):
             db=param_dict["COUCH_DATABASE"],
             document=param_dict["review"]
         ).get_result()
-    except ApiException as ae:
-        print("unable to connect", ae)
+    except ApiException as api_exception:
+        print("unable to connect", api_exception)
         return {
             'statusCode': 404,
             'message': 'Something went wrong'
